@@ -7,24 +7,48 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === 'translate') {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      function: translateSelection,
-      args: [info.selectionText]
+  if (info.menuItemId === 'translate' && tab.id) {
+    chrome.storage.sync.get(['sourceLanguage', 'targetLanguage'], (data) => {
+      let source = data.sourceLanguage || 'en';
+      let target = data.targetLanguage || 'ru';
+      let word = info.selectionText;
+
+      if (!word) {
+        console.error('No word selected');
+        return;
+      }
+
+      let url = `https://translate.google.com/#view=home&op=translate&sl=${source}&tl=${target}&text=${word}`;
+
+
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: fetchTranslation,
+        args: [url]
+      }, (results) => {
+        if (chrome.runtime.lastError) {
+          console.error('Script execution failed:', chrome.runtime.lastError);
+        }
+      });
     });
   }
 });
 
-function translateSelection(text) {
-  chrome.storage.sync.get(['sourceLanguage', 'targetLanguage'], (data) => {
-    let source = data.sourceLanguage || 'en';
-    let target = data.targetLanguage || 'es';
-
-    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${source}&tl=${target}&dt=t&q=${encodeURIComponent(text)}`)
-      .then(response => response.json())
-      .then(data => {
-        alert(`Translation: ${data[0][0][0]}`);
-      });
-  });
+function fetchTranslation(url) {
+  fetch(url)
+    .then(response => response.text())
+    .then(html => {
+      let parser = new DOMParser();
+      let doc = parser.parseFromString(html, 'text/html');
+      let resultBox = doc.querySelector('.result-container');
+      if (resultBox) {
+        alert('Translation: ' + resultBox.innerText);
+      } else {
+        alert('Translation not found.');
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching translation:', error);
+      alert('Translation error');
+    });
 }
