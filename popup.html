@@ -1,20 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Word Translator Settings</title>
+  <title>Translation Result</title>
   <style>
     body { font-family: Arial, sans-serif; }
-    label { display: block; margin-top: 10px; }
+    #translation { margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h2>Translator Settings</h2>
-  <label for="sourceLanguage">From:</label>
-  <input type="text" id="sourceLanguage" placeholder="e.g., en">
-  <label for="targetLanguage">To:</label>
-  <input type="text" id="targetLanguage" placeholder="e.g., ru">
-  <button id="save">Save</button>
-
+  <h2>Translation Result</h2>
+  <div id="translation">Loading...</div>
   <script src="popup.js"></script>
 </body>
 </html>
