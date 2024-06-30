@@ -18,37 +18,41 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         return;
       }
 
-      let url = `https://translate.google.com/#view=home&op=translate&sl=${source}&tl=${target}&text=${word}`;
+      let url = `https://translate.google.com/#view=home&op=translate&sl=${source}&tl=${target}&text=${encodeURIComponent(word)}`;
 
-
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: fetchTranslation,
-        args: [url]
-      }, (results) => {
-        if (chrome.runtime.lastError) {
-          console.error('Script execution failed:', chrome.runtime.lastError);
-        }
+      chrome.tabs.create({ url: url, active: false }, (newTab) => {
+        chrome.scripting.executeScript({
+          target: { tabId: newTab.id },
+          func: fetchTranslation,
+          args: [url]
+        }, (results) => {
+          if (chrome.runtime.lastError) {
+            console.error('Script execution failed:', chrome.runtime.lastError);
+          }
+        });
       });
     });
   }
 });
 
 function fetchTranslation(url) {
-  fetch(url)
-    .then(response => response.text())
-    .then(html => {
-      let parser = new DOMParser();
-      let doc = parser.parseFromString(html, 'text/html');
-      let resultBox = doc.querySelector('.result-container');
-      if (resultBox) {
-        alert('Translation: ' + resultBox.innerText);
-      } else {
-        alert('Translation not found.');
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching translation:', error);
-      alert('Translation error');
-    });
+  setTimeout(() => {
+    let resultBox = document.querySelector('.result-container');
+    if (resultBox) {
+      chrome.runtime.sendMessage({ translation: resultBox.innerText });
+    } else {
+      chrome.runtime.sendMessage({ error: 'Translation not found.' });
+    }
+  }, 5000); // Wait 5 seconds for the page to load and translation to appear
 }
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.translation) {
+    chrome.storage.local.set({ translation: message.translation }, () => {
+      chrome.action.setPopup({ popup: 'popup.html' });
+      chrome.action.openPopup();
+    });
+  } else if (message.error) {
+    console.error(message.error);
+  }
+});
