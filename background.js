@@ -43,7 +43,7 @@ function fetchTranslation(url) {
     } else {
       chrome.runtime.sendMessage({ error: 'Translation not found.' });
     }
-  }, 5000); // Wait 5 seconds for the page to load and translation to appear
+  }, 5000);
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
