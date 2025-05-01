@@ -1,8 +1,6 @@
-// Load the API key from the configuration file
 let script = document.createElement('script');
 script.src = chrome.runtime.getURL('config.js');
 script.onload = function() {
-  // Safe to use config.API_KEY after this point
   document.head.removeChild(script);
 };
 document.head.appendChild(script);
@@ -64,7 +62,7 @@ function translateWord(word, callback) {
   chrome.storage.sync.get(['sourceLanguage', 'targetLanguage'], (data) => {
     let source = data.sourceLanguage || 'en';
     let target = data.targetLanguage || 'es';
-    let apiKey = config.API_KEY; // Ensure config.API_KEY is loaded correctly
+    let apiKey = config.API_KEY;
 
     fetch(`https://translation.googleapis.com/language/translate/v2?key=${apiKey}&q=${encodeURIComponent(word)}&source=${source}&target=${target}`)
       .then(response => response.json())
